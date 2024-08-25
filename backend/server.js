@@ -93,6 +93,29 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+app.get("/imageByDeviceId/:deviceId", (req, res) => {
+  const deviceId = req.params.deviceId;
+  console.log("deviceId: ", deviceId);
+
+  const sql = "SELECT filename, filedata FROM Images WHERE deviceId = ?";
+  connection.query(sql, [deviceId], (err, result) => {
+    if (err) {
+      console.error("Error retrieving image from the database:", err);
+      res.status(500).send("Error retrieving image from the database");
+      return;
+    }
+
+    if (result.length === 0) {
+      res.status(404).send("Image not found for the given deviceId");
+      return;
+    }
+
+    const image = result[0];
+    res.setHeader("Content-Type", "image/jpeg"); // Set the correct MIME type
+    res.send(Buffer.from(image.filedata, "base64")); // Send the image data
+  });
+});
+
 app.get("/validate-token", authenticateToken, (req, res) => {
   res.status(200).json({ message: "Token is valid", user: req.user });
 });
